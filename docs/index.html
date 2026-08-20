@@ -1,1 +1,181 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Which Pages Are Losing Clicks They Should Be Getting? A CTR Opportunity Study</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 760px; margin: 0 auto; padding: 24px; line-height: 1.6; color: #1a1a1a; }
+  h1 { font-size: 1.8em; }
+  h2 { margin-top: 2.2em; border-bottom: 2px solid #eee; padding-bottom: 6px; }
+  .abstract { background: #f6f8fa; padding: 20px; border-radius: 8px; font-size: 1.05em; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  th { background: #f0f0f0; }
+  img { max-width: 100%; border: 1px solid #ddd; border-radius: 6px; margin: 12px 0; }
+  .caption { font-size: 0.9em; color: #555; margin-top: -6px; margin-bottom: 20px; }
+  .limits li { margin-bottom: 10px; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; }
+  footer { margin-top: 3em; padding-top: 1em; border-top: 1px solid #eee; font-size: 0.9em; color: #666; }
+</style>
+</head>
+<body>
+
+<h1>Which Pages Are Losing Clicks They Should Be Getting? A CTR Opportunity Study</h1>
+
+<div class="abstract">
+<strong>Abstract.</strong> Among visible, well-ranked pages, click-through rate (CTR) varies
+sharply by search position — but does it vary in ways a reviewer can act on? Using a 132,471-page
+slice of FlyRank's internship search-performance warehouse (March 2026), I built a transparent
+baseline rule that ranks pages by how far their CTR sits below their own position tier's average,
+and compared it against a trained Random Forest under an honest, client-grouped validation split.
+The headline result: the simple, transparent baseline performed at least as well as — and
+slightly better than — the trained model at larger ranking depths (precision@200/500). This paper
+reports a ranked, decision-support action queue for content reviewers, built on the baseline rule,
+along with its explicit limits.
+</div>
+
+<h2>Introduction</h2>
+<p>
+A content reviewer with limited time cannot manually check every page in a large site. They need
+a ranked list: which pages, out of thousands, are most worth reviewing first for a possible
+click-through problem? A naive approach — flagging any page under a fixed CTR threshold — fails
+immediately, because CTR mechanically drops with search position: a page in position 20 will
+almost always have lower CTR than a page in position 2, regardless of its actual quality. The real
+question is comparative: is this page underperforming <em>relative to its peers at the same
+position</em>?
+</p>
+
+<h2>Data</h2>
+<p>
+This study uses the <strong>FlyRank internship-warehouse</strong> dataset (build
+<code>v20260703</code>), specifically the <code>fact_content_daily_performance</code> table
+(page-day grain) joined to <code>dim_content</code> (content metadata). The working window is
+<strong>March 2026</strong> — a mid-panel month, deliberately not the final month in the dataset,
+which is reserved as a sealed test window and is the natural outcome period for any
+past-to-future label.
+</p>
+<p>
+After filtering to pages with at least 20 impressions (needed to avoid a degenerate,
+mostly-zero CTR distribution found during data preparation), the working set is
+<strong>132,471 pages</strong>.
+</p>
+<p><strong>Excluded, and why:</strong></p>
+<ul>
+  <li><code>trend_direction</code>, <code>trend_pct</code> — not present in this table, and would
+  be leakage traps (derived from the same outcome being ranked) if they were.</li>
+  <li>Product-decision fields (e.g. health/priority scores) — not shipped in this dataset, by
+  design, to prevent circular results.</li>
+  <li>All identifiers used are pseudonymized hashes, used only for joining and grouping. No
+  client names, URLs, or raw queries appear anywhere in this study.</li>
+</ul>
+
+<h2>Methodology</h2>
+<p>
+<strong>Assumption:</strong> a page's expected CTR should be judged relative to its own position
+tier, not as a flat number — confirmed directly: CTR ranges from roughly 0.38% in the top-3
+positions down to 0.13% for deep results, a real and well-supported spread across thousands of
+pages per tier (Figure 1).
+</p>
+<img src="img/ctr_by_position_tier.png" alt="Bar chart of mean CTR by position tier">
+<p class="caption">Figure 1. Observed CTR by position tier, March 2026. CTR drops sharply as
+position tier gets worse — the core justification for a tier-relative rule instead of a flat
+threshold.</p>
+
+<p><strong>Baseline:</strong> a transparent rule, <code>ctr_underperformer_for_tier</code>,
+scoring each page by how far its CTR sits below its own position tier's average. Pages with
+exactly 0% CTR despite strong position and real traffic are flagged separately for a tracking
+check before a content fix, since this pattern is unusual enough to suggest a possible
+measurement issue rather than a content one.</p>
+
+<p><strong>Label:</strong> a page is labeled "low CTR" if its CTR sits below the median CTR of
+the working set.</p>
+
+<p><strong>Model:</strong> a Random Forest classifier using position, impression volume, word
+count, and content age — none of which are derived from CTR or the label itself.</p>
+
+<p><strong>Validation design:</strong> split by client (grouped, not random) — pages from the
+same client may share hidden characteristics, so a random split risks the model faking skill by
+memorizing per-client patterns rather than learning a general rule.</p>
+
+<p><strong>Leakage checks performed:</strong> base rate reported alongside every score; a
+deliberate label-derived-column trap (adding CTR itself as a feature, confirming the score jumps
+toward 1.0 as expected); a with/without test on suspect features; a random-vs-grouped split
+comparison, honestly reported even where the result was inconclusive.</p>
+
+<h2>Results</h2>
+<table>
+<tr><th>Method</th><th>Precision@50</th><th>Precision@200</th><th>Precision@500</th><th>Base rate</th></tr>
+<tr><td>Baseline (CTR-gap rule)</td><td>1.000</td><td>1.000</td><td>1.000</td><td>0.47–0.50</td></tr>
+<tr><td>Random Forest</td><td>1.000</td><td>0.995</td><td>0.978–0.984</td><td>0.47–0.50</td></tr>
+</table>
+<img src="img/model_vs_baseline.png" alt="Bar chart comparing baseline and model precision at different K values">
+<p class="caption">Figure 2. Baseline vs. trained model, same client-grouped split. The
+baseline holds a small, consistent edge at larger ranking depths.</p>
+<p>
+At small K, both methods tie at a perfect score — an artifact of test-set size, not a meaningful
+result. At K=200 and K=500, a real gap appears: the baseline stays perfect while the trained
+model slips slightly (0.978–0.995). The model's top feature by permutation importance is
+impression volume, consistent with the baseline's own use of volume as a tie-breaker — the two
+methods are, in effect, leaning on similar signal, just packaged differently.
+</p>
+
+<h2>Limitations</h2>
+<ul class="limits">
+<li><strong>Cross-sectional, not causal.</strong> This is a single-month snapshot, not an
+experiment. It cannot say that editing a flagged page <em>will</em> increase its CTR — only that
+the page currently <em>looks worth reviewing</em>.</li>
+<li><strong>Single time window.</strong> Built on March 2026 only; a different month could shift
+which pages qualify.</li>
+<li><strong>Validation stability.</strong> A single grouped-split check is not fully stable
+evidence on its own; a stronger re-validation would average across multiple folds.</li>
+<li><strong>Selection bias risk.</strong> If reviewers only ever act on the top of this queue, any
+future "reviewed vs. unreviewed" comparison would be biased by that choice itself.</li>
+<li><strong>No algorithm claims.</strong> Nothing here claims to model or predict how any search
+engine's ranking algorithm works — only observed, portfolio-level patterns in this dataset.</li>
+<li><strong>Content-format mismatch is undetected.</strong> This method can flag a CTR gap but
+cannot tell "bad title" apart from "wrong content format for this query" — that judgment needs a
+human reviewer.</li>
+</ul>
+
+<h2>Ranked Recommendations</h2>
+<p>
+The action queue ranks 50,752 visible, well-positioned, underperforming pages, each carrying a
+reason code and one of two actions:
+</p>
+<ul>
+  <li><strong>review_title_meta</strong> (43,449 pages) — review the page's title, meta
+  description, or snippet for a possible click-through improvement.</li>
+  <li><strong>check_tracking_then_review_title_meta</strong> (7,303 pages) — pages with exactly
+  0% CTR despite strong position and real traffic; check analytics/tracking setup before assuming
+  a content problem.</li>
+</ul>
+<p>
+<strong>What should never be automated:</strong> no page should be auto-edited or auto-published
+from this list. No page should be removed or de-indexed based on this queue alone — exclusion from
+the queue reflects the filters used to build it, not a judgment that a page is worthless.
+</p>
+
+<h2>Reproducibility</h2>
+<p>
+Full code, notebooks, and data contract live in the project repository:
+<a href="https://github.com/Urooj-Baloch/FlyRank-ML-internship">github.com/Urooj-Baloch/FlyRank-ML-internship</a>.
+The capstone notebook (<code>work/notebooks/capstone.ipynb</code>) reproduces every table and
+figure in this paper; random seeds are fixed at 42 throughout model training and splitting.
+</p>
+
+<h2>Acknowledgments & Data Credit</h2>
+<p>
+Built on the FlyRank ML Internship dataset —
+<a href="https://flyrank.ai">flyrank.ai</a>. Data accessed via the
+<a href="https://huggingface.co/datasets/FlyRank/internship-warehouse">FlyRank internship-warehouse</a>
+release on Hugging Face, part of the FlyRank AI/ML Engineering Internship program.
+</p>
+
+<footer>
+Urooj Baloch · FlyRank ML/AI Engineering Internship · Capstone, 2026
+</footer>
+
+</body>
+</html>
