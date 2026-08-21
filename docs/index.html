@@ -181,11 +181,11 @@
         <span class="val">0.13%</span>
       </div>
     </div>
-    <p class="ladder-caption">Observed CTR by position tier, March 2026 — the cliff this whole study is built around.</p>
+    <p class="ladder-caption">Observed CTR by position tier, March 2026, the cliff this whole study is built around.</p>
 
     <div class="abstract-card">
       <p class="path">abstract</p>
-      <p>Using a 132,471-page slice of FlyRank's internship search-performance warehouse, I built a transparent baseline rule that ranks pages by how far their CTR sits below their own position tier's average, and compared it against a trained Random Forest under an honest, client-grouped validation split. The baseline performed at least as well as — and slightly better than — the trained model at larger ranking depths. This paper reports a ranked, decision-support action queue for content reviewers, built on the baseline rule, along with its explicit limits.</p>
+      <p>Using a 132,471-page slice of FlyRank's internship search-performance warehouse, I built a transparent baseline rule that ranks pages by how far their CTR sits below their own position tier's average, and compared it against a trained Random Forest under an honest, client-grouped validation split. The baseline performed at least as well as, and slightly better than, the trained model at larger ranking depths. This paper reports a ranked, decision-support action queue for content reviewers, built on the baseline rule, along with its explicit limits.</p>
     </div>
   </div>
 </header>
@@ -194,7 +194,7 @@
   <div class="wrap">
     <h2><span class="num">01</span> Introduction</h2>
     <p>A content reviewer with limited time cannot manually check every page in a large site. They need a ranked list: which pages, out of thousands, are most worth reviewing first for a possible click-through problem?</p>
-    <p>A naive approach — flagging any page under a fixed CTR threshold — fails immediately, because CTR mechanically drops with search position, as the ladder above shows. A page in position 20 will almost always have lower CTR than a page in position 2, regardless of its actual quality. The real question is comparative: is this page underperforming <strong>relative to its peers at the same position</strong>?</p>
+    <p>A naive approach, flagging any page under a fixed CTR threshold, fails immediately, because CTR mechanically drops with search position, as the ladder above shows. A page in position 20 will almost always have lower CTR than a page in position 2, regardless of its actual quality. The real question is comparative: is this page underperforming <strong>relative to its peers at the same position</strong>?</p>
   </div>
 </section>
 
@@ -239,7 +239,7 @@
 
     <figure>
       <img src="img/ctr_by_position_tier.png" alt="Bar chart of mean CTR by position tier">
-      <figcaption>Figure 1. Observed CTR by position tier, March 2026 — the same data shown in the ladder above, in full chart form.</figcaption>
+      <figcaption>Figure 1. Observed CTR by position tier, March 2026, the same data shown in the ladder above, in full chart form.</figcaption>
     </figure>
   </div>
 </section>
