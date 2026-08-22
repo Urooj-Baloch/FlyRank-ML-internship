@@ -223,7 +223,7 @@
       <dd><code>gsc_avg_position</code>, <code>gsc_impressions</code>, <code>word_count</code>, <code>content_age_days</code> all knowable before the decision moment, none derived from the label.</dd>
 
       <dt>label</dt>
-      <dd>a page is labeled "low CTR" if its CTR sits below the median CTR of the working set.</dd>
+      <dd>a page is labeled "low CTR" if its CTR sits below the median CTR of the working set. <strong>A known limitation:</strong> this threshold is global, not tier-relative, while the research question asks about underperformance relative to position peers specifically. The ranking score itself (<code>ctr_gap</code>) is properly tier-relative, but the supervised label used to evaluate the model is not. A tighter version of this study would define the label the same way as the score, and is listed as follow-up work below.</dd>
 
       <dt>baseline</dt>
       <dd><code>ctr_underperformer_for_tier</code> a transparent rule scoring each page by how far its CTR sits below its own position tier's average. Pages at exactly 0% CTR despite strong position and real traffic are flagged separately, for a tracking check before a content fix.</dd>
@@ -273,7 +273,9 @@
       <figcaption>Figure 2. Baseline vs. trained model, same client-grouped split. The baseline holds a small, consistent edge at larger ranking depths.</figcaption>
     </figure>
 
-    <p>At small K, both methods tie at a perfect score — an artifact of test-set size, not a meaningful result. At K=200 and K=500, a real gap appears: the baseline stays perfect while the trained model slips slightly. The model's top feature by permutation importance is impression volume, consistent with the baseline's own use of volume as a tie-breaker the two methods are, in effect, leaning on similar signal, just packaged differently.</p>
+    <p>The test set holds 26,494 pages, roughly 46.6% of which are labeled "low CTR" (below the working set's median). Precision@K means: of the top K pages by score, what fraction are true positives. Ties are broken by impression volume. Random precision at any K is the base rate, about 0.47. K=50, K=200, and K=500 were chosen to represent realistic weekly review capacities, not to flatter the result.</p>
+
+    <p>At small K, both methods tie at a perfect score. This is an artifact of test-set size, not a meaningful result: with a base rate near 50%, any reasonable ranking can put 50 true positives first by chance alone, since 50 pages is under 0.4% of the test set. At K=200 and K=500, a real gap appears: the baseline stays perfect while the trained model slips slightly. The model's top feature by permutation importance is impression volume, consistent with the baseline's own use of volume as a tie-breaker. The two methods are, in effect, leaning on similar signal, just packaged differently.</p>
     <p><strong>Verdict:</strong> the simpler, transparent baseline is the recommended mechanism — complexity did not earn its place here.</p>
   </div>
 </section>
@@ -288,6 +290,8 @@
       <li><strong>Selection bias risk.</strong> If reviewers only ever act on the top of this queue, any future "reviewed vs. unreviewed" comparison would be biased by that choice itself.</li>
       <li><strong>No algorithm claims.</strong> Nothing here claims to model or predict how any search engine's ranking algorithm works — only observed, portfolio-level patterns in this dataset.</li>
       <li><strong>Content-format mismatch is undetected.</strong> This method can flag a CTR gap but cannot tell "bad title" apart from "wrong content format for this query" that judgment needs a human reviewer.</li>
+      <li><strong>Label/question mismatch.</strong> The supervised label is thresholded on the global median CTR, while the research question is about underperformance relative to position-tier peers. The ranking score (<code>ctr_gap</code>) is tier-relative and used correctly; the label used to evaluate the model is not, and should be redefined to match in a follow-up pass.</li>
+      <li><strong>Baseline comparison could be tighter.</strong> The current baseline uses position-tier CTR directly, while the model has to learn that relationship indirectly from raw position and impressions. A stronger study would also report a position-only baseline and a Logistic Regression, to isolate exactly where any improvement comes from.</li>
     </ul>
   </div>
 </section>
