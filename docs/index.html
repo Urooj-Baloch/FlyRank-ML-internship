@@ -194,6 +194,7 @@
   <div class="wrap">
     <h2><span class="num">01</span> Introduction</h2>
     <p>A content reviewer with limited time cannot manually check every page in a large site. They need a ranked list: which pages, out of thousands, are most worth reviewing first for a possible click-through problem?</p>
+    <p>This is a familiar problem inside FlyRank's own workflow: the product already has a "Fix CTR" flag for exactly this pattern, a page that ranks respectably but pulls fewer clicks than its position should earn. The FlyRank research paper covering this same portfolio noted a weighted CTR drop of roughly 88% from top-3 positions down to deep results, and flagged that composite scores like Health Score should be read alongside raw search performance, not instead of it. This study is a smaller, from-scratch version of that same instinct: instead of trusting a pre-built flag, build the comparison from first principles, check the assumption behind it, and prove out a transparent rule a reviewer could actually trust and audit.</p>
     <p>A naive approach flagging any page under a fixed CTR threshold fails immediately, because CTR mechanically drops with search position, as the ladder above shows. A page in position 20 will almost always have lower CTR than a page in position 2, regardless of its actual quality. The real question is comparative: is this page underperforming <strong>relative to its peers at the same position</strong>?</p>
   </div>
 </section>
